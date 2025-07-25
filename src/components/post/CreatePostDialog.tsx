@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { X, MapPin, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CreatePostData } from '@/types';
 
@@ -25,7 +24,6 @@ export const CreatePostDialog = ({ open, onOpenChange, onPostCreated }: CreatePo
   });
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const handleAddTag = () => {
@@ -47,17 +45,20 @@ export const CreatePostDialog = ({ open, onOpenChange, onPostCreated }: CreatePo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !formData.title.trim() || !formData.description.trim()) return;
+    if (!formData.title.trim() || !formData.description.trim()) return;
 
     setLoading(true);
     try {
+      // For demo purposes, create post with a dummy author_id
+      const dummyAuthorId = '550e8400-e29b-41d4-a716-446655440000';
+      
       // Create the post
       const { data: post, error: postError } = await supabase
         .from('posts')
         .insert({
           title: formData.title,
           description: formData.description,
-          author_id: user.id,
+          author_id: dummyAuthorId,
           image_url: formData.image_url || null,
           location_lat: formData.location_lat || null,
           location_lng: formData.location_lng || null,

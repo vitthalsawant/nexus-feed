@@ -3,13 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Post } from '@/types';
 import { PostCard } from './PostCard';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 
 export const GlobalFeed = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   useEffect(() => {
     fetchPosts();
@@ -42,47 +40,16 @@ export const GlobalFeed = () => {
   };
 
   const handleUpvote = async (postId: string) => {
-    if (!user) return;
-
     try {
-      // Check if user already upvoted
-      const { data: existingInteraction } = await supabase
-        .from('post_interactions')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('post_id', postId)
-        .eq('interaction_type', 'upvote')
-        .single();
-
-      if (existingInteraction) {
-        // Remove upvote
-        await supabase
-          .from('post_interactions')
-          .delete()
-          .eq('id', existingInteraction.id);
-
-        // Decrease upvote count
+      // For demo purposes without auth, just increment the upvote count
+      const currentPost = posts.find(p => p.id === postId);
+      if (currentPost) {
         await supabase
           .from('posts')
-          .update({ upvotes: posts.find(p => p.id === postId)!.upvotes - 1 })
-          .eq('id', postId);
-      } else {
-        // Add upvote
-        await supabase
-          .from('post_interactions')
-          .insert({
-            user_id: user.id,
-            post_id: postId,
-            interaction_type: 'upvote'
-          });
-
-        // Increase upvote count
-        await supabase
-          .from('posts')
-          .update({ upvotes: posts.find(p => p.id === postId)!.upvotes + 1 })
+          .update({ upvotes: currentPost.upvotes + 1 })
           .eq('id', postId);
       }
-
+      
       // Refresh posts
       fetchPosts();
     } catch (error) {
